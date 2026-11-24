@@ -1,0 +1,32 @@
+name: Windows build
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build
+        run: dotnet build GallerySaver.csproj -c Release -warnaserror
+
+      - name: Test the standalone screen saver
+        run: ./scripts/Test-Release.ps1
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Gallery-screensaver
+          path: |
+            bin/Release/net48/Gallery.scr
+            LICENSE
+            THIRD-PARTY-NOTICES.txt
+          if-no-files-found: error

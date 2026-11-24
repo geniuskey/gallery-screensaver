@@ -1,0 +1,56 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    The GALLERY screen saver for Windows: one self-contained Gallery.scr.
+
+    .NET Framework 4.8 ships with every Windows 10 and 11, and the WebView2
+    runtime (the Chromium engine of Edge) is preinstalled on them, so nothing
+    else has to be installed. The WebView2 assemblies and its native loader are
+    embedded in the executable and resolved at start (see Program.cs).
+  -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net48</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <AssemblyName>Gallery</AssemblyName>
+    <RootNamespace>GallerySaver</RootNamespace>
+    <Prefer32Bit>false</Prefer32Bit>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <Version>0.1.9</Version>
+    <Product>GALLERY Screen Saver</Product>
+    <Description>GALLERY — The Art of Computation</Description>
+    <Company>Euiyun Lab</Company>
+    <Copyright>Copyright © 2026 EUIYUN</Copyright>
+    <GenerateAppConfig>false</GenerateAppConfig>
+    <WebView2Version>1.0.2903.40</WebView2Version>
+    <WebView2Package>$(NuGetPackageRoot)microsoft.web.webview2/$(WebView2Version)/</WebView2Package>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Web.WebView2" Version="$(WebView2Version)" />
+    <!-- So that it builds without the .NET Framework developer pack (and off Windows). -->
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <GalleryEmbed Include="$(WebView2Package)lib/net4*/Microsoft.Web.WebView2.Core.dll" LogicalName="Microsoft.Web.WebView2.Core.dll" />
+    <GalleryEmbed Include="$(WebView2Package)runtimes/win-x64/native/WebView2Loader.dll" LogicalName="loader/x64/WebView2Loader.dll" />
+    <GalleryEmbed Include="$(WebView2Package)runtimes/win-x86/native/WebView2Loader.dll" LogicalName="loader/x86/WebView2Loader.dll" />
+    <GalleryEmbed Include="$(WebView2Package)runtimes/win-arm64/native/WebView2Loader.dll" LogicalName="loader/arm64/WebView2Loader.dll" />
+    <EmbeddedResource Include="@(GalleryEmbed)" />
+  </ItemGroup>
+
+  <!-- A .scr that silently lacks one of these would only fail on someone else's machine. -->
+  <Target Name="CheckGalleryEmbeds" BeforeTargets="PrepareForBuild">
+    <Error Condition="'@(GalleryEmbed->Count())' != '4'"
+           Text="Expected 4 WebView2 files to embed from $(WebView2Package), found @(GalleryEmbed->Count()): @(GalleryEmbed)" />
+  </Target>
+
+  <!-- Windows recognises a screen saver by its extension: Gallery.exe → Gallery.scr. -->
+  <Target Name="CopyAsScr" AfterTargets="Build">
+    <Copy SourceFiles="$(TargetPath)" DestinationFiles="$(OutDir)Gallery.scr" />
+  </Target>
+
+</Project>
